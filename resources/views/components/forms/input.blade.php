@@ -1,9 +1,10 @@
 @props([
     'name',
-    'label' => null,
+    'label' => '',
     'type' => 'text',
     'placeholder' => '',
-    'value' => null
+    'required' => false,
+    'icon' => '',
 ])
 
 <div class="mb-3">
@@ -11,19 +12,38 @@
         <label for="{{ $name }}" class="form-label">{{ $label }}</label>
     @endif
 
-    <input
-        type="{{ $type }}"
-        name="{{ $name }}"
-        id="{{ $name }}"
-        placeholder="{{ $placeholder }}"
-        {{ $attributes->merge(['class' => 'form-control ' . ($errors->has($name) ? 'is-invalid' : '')]) }}
-        value="{{ old($name, $value) }}"
-    >
-
-    @error($name)
-        <div class="invalid-feedback">
-            {{ $message }}
+    @if($icon)
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="{{ $icon }}"></i>
+            </span>
+            <input
+                type="{{ $type }}"
+                name="{{ $name }}"
+                id="{{ $name }}"
+                placeholder="{{ $placeholder }}"
+                {{ $required ? 'required' : '' }}
+                value="{{ old($name) }}"
+                class="form-control @error($name) is-invalid @enderror"
+                {{ $attributes->except(['name','label','type','placeholder','required','icon']) }}
+            >
+            @error($name)
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
-    @enderror
+    @else
+        <input
+            type="{{ $type }}"
+            name="{{ $name }}"
+            id="{{ $name }}"
+            placeholder="{{ $placeholder }}"
+            {{ $required ? 'required' : '' }}
+            value="{{ $type !== 'password' ? old($name) : '' }}"
+            class="form-control @error($name) is-invalid @enderror"
+            {{ $attributes->except(['name','label','type','placeholder','required','icon']) }}
+        >
+        @error($name)
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    @endif
 </div>
-

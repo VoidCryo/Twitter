@@ -1,13 +1,16 @@
 @props([
-    'type' => 'submit',
-    'color' => 'primary',
-    'label' => 'Submit',
+    'type' => 'button',
+    'variant' => 'brand',
+    'loading' => false,
 ])
 
 <button
     type="{{ $type }}"
-    {{ $attributes->merge(['class' => 'btn btn-' . $color]) }}
+    {{ $attributes->merge(['class' => 'btn-' . $variant]) }}
+    {{ $loading ? 'disabled' : '' }}
 >
-    {{ $slot->isEmpty() ? $label : $slot }}
+    @if($loading)
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+    @endif
+    {{ $slot }}
 </button>
-

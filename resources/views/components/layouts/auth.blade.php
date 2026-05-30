@@ -1,22 +1,18 @@
 <!DOCTYPE html>
-<html lang="id" class="h-100">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ isset($title) && $title ? 'Tenebris | ' . $title : 'Tenebris' }}</title>
-    @vite(['resources/sass/app.scss', 'resources/js/bootstrap.js'])
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ $title ?? 'Tenebris' }}</title>
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @stack('styles')
 </head>
-<body class="h-100">
-<div class="d-flex vh-100">
-    <aside class="d-none d-md-flex flex-column justify-content-center p-5 bg-dark text-white flex-shrink-0" style="width: 420px;">
+<body>
+    <div class="auth-wrapper">
+        {{ $slot }}
+    </div>
 
-    </aside>
-    <main class="w-100 d-flex align-items-center justify-content-center p-4">
-        <div class="w-100" style="max-width: 400px;">
-            {{ $slot }}
-        </div>
-    </main>
-</div>
+    @stack('scripts')
 </body>
 </html>
-

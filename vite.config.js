@@ -12,9 +12,14 @@ export default defineConfig({
         }),
     ],
     css: {
-        preprocessorOptions : {
+        preprocessorOptions: {
             scss: {
-                silenceDeprecations: ['import', 'color-functions', 'global-builtin', 'if-function'],
+                silenceDeprecations: [
+                    'color-functions',
+                    'global-builtin',
+                    'import'
+                ],
+                quietDeps: true,
             }
         }
     },
@@ -23,7 +28,7 @@ export default defineConfig({
             ignored: [
                 '**/vendor/**',
                 '**/node_modules/**'
-            ],
+            ]
         }
     }
 });
