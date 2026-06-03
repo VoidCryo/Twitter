@@ -25,6 +25,7 @@ return new class extends Migration
             $table->index('parent_id');
             $table->index('root_id');
             $table->index('repost_of_id');
+            $table->fullText('content');
         });
     }
 

@@ -24,6 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/Home/Load-more', [HomeController::class, 'loadMore'])->name('home.load-more');
 
+    //SearchController
+    Route::get('/Search', [SearchController::class, 'index'])->name('search');
+
     // logout
     Route::post('/Logout', [LoginController::class, 'logout'])->name('logout');
 

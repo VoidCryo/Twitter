@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PostMedia whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PostMedia wherePostId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PostMedia whereUpdatedAt($value)
+ * @property-read string $image_url
  * @mixin \Eloquent
  */
 #[Fillable(['post_id', 'image'])]
