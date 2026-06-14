@@ -12,7 +12,6 @@
 @php
     $authUser    = auth()->user();
     $authProfile = $authUser?->profile;
-    // Hitung unread notif sekali di layout — hindari N+1 di navbar
     $navUnread   = $authUser
         ? \App\Models\Notification::where('user_id', $authUser->id)->whereNull('read_at')->count()
         : 0;

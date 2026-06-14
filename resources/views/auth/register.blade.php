@@ -17,7 +17,7 @@
             @csrf
 
             <div class="mb-3">
-                <label class="form-label fw-semibold" for="name">Username <span class="text-secondary fw-normal">(handle @, tidak bisa diubah)</span></label>
+                <label class="form-label fw-semibold" for="name">Username</label>
                 <div class="input-group">
                     <span class="input-group-text fw-semibold">@</span>
                     <input type="text" name="name" id="name"

@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\FollowService;
 use App\Services\SearchService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class SearchController extends Controller
 {
-    public function __construct(private readonly SearchService $searchService) {}
+    public function __construct(
+        private readonly SearchService $searchService,
+        private readonly FollowService $followService,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -22,6 +27,9 @@ class SearchController extends Controller
             $post = $this->searchService->searchPosts($key);
         }
 
-        return view('pages.search', compact('user', 'post', 'key'));
+        $authUser = Auth::user();
+        $newUsers = $this->followService->getSuggestions($authUser, 5);
+
+        return view('pages.search', compact('user', 'post', 'newUsers', 'key'));
     }
 }

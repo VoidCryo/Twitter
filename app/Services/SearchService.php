@@ -8,18 +8,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class SearchService
 {
-    /**
-     * Cari user berdasarkan keyword.
-     *
-     * @param  string $keyword
-     * @param  int    $perPage
-     * @return LengthAwarePaginator
-     */
-    public function searchUsers(string $keyword, int $perPage = 15): LengthAwarePaginator
-    {
+    public function searchUsers(string $keyword, int $perPage = 15): LengthAwarePaginator {
         $query = User::with('profile');
 
-        if (mb_strlen($keyword) < 3) {
+        if (mb_strlen($keyword) < 6) {
             $query->where('name', 'LIKE', '%' . $keyword . '%');
         } else {
             $query->whereFullText('name', $keyword);
@@ -28,15 +20,7 @@ class SearchService
         return $query->paginate($perPage, ['*'], 'page_user');
     }
 
-    /**
-     * Cari post berdasarkan keyword.
-     *
-     * @param  string $keyword
-     * @param  int    $perPage
-     * @return LengthAwarePaginator
-     */
-    public function searchPosts(string $keyword, int $perPage = 15): LengthAwarePaginator
-    {
+    public function searchPosts(string $keyword, int $perPage = 15): LengthAwarePaginator {
         $query = Post::with([
                 'postMedia',
                 'user.profile',
@@ -46,7 +30,7 @@ class SearchService
             ->withCount(['likedBy', 'reposts', 'replies'])
             ->whereNull('parent_id');
 
-        if (mb_strlen($keyword) < 3) {
+        if (mb_strlen($keyword) < 6) {
             $query->where('content', 'LIKE', '%' . $keyword . '%');
         } else {
             $query->whereFullText('content', $keyword);

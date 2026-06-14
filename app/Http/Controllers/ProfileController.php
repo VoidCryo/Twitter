@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Models\User;
+use App\Services\FollowService;
 use App\Services\ProfileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,10 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function __construct(private readonly ProfileService $profileService) {}
+    public function __construct(
+        private readonly ProfileService $profileService,
+        private readonly FollowService $followService
+    ) {}
 
     public function index(User $user): View
     {
@@ -23,7 +27,9 @@ class ProfileController extends Controller
         $likedPosts = $this->profileService->getLikedPosts($user);
         $tab        = request()->input('tab', 'posts');
 
-        return view('pages.profile.show', compact('user', 'authUser', 'posts', 'likedPosts', 'tab'));
+        $newUsers = $this->followService->getSuggestions($user, 5);
+
+        return view('pages.profile.show', compact('user', 'authUser', 'newUsers', 'posts', 'likedPosts', 'tab'));
     }
 
     public function edit(): View

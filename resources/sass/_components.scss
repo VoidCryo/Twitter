@@ -109,3 +109,5 @@
     border: none; padding: 0; transition: background 0.2s, transform 0.2s;
     &.lb-dot-active { background: #fff; transform: scale(1.3); }
 }
+
+#sidebarSuggestions { display: none; }

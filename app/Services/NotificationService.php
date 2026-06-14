@@ -53,14 +53,6 @@ class NotificationService
         );
     }
 
-    /**
-     * Buat notifikasi reply.
-     *
-     * @param  User $actor
-     * @param  Post $post  (post induk)
-     * @param  Post $reply
-     * @return void
-     */
     public function notifyReply(User $actor, Post $post, Post $reply): void
     {
         if ($post->user_id === $actor->id) return;
@@ -73,13 +65,6 @@ class NotificationService
         ]);
     }
 
-    /**
-     * Buat notifikasi follow.
-     *
-     * @param  User $actor
-     * @param  User $target
-     * @return void
-     */
     public function notifyFollow(User $actor, User $target): void
     {
         if ($actor->id === $target->id) return;
@@ -97,13 +82,6 @@ class NotificationService
         );
     }
 
-    /**
-     * Hapus notifikasi like (saat unlike).
-     *
-     * @param  User $actor
-     * @param  Post $post
-     * @return void
-     */
     public function removeNotifyLike(User $actor, Post $post): void
     {
         Notification::where([
@@ -114,13 +92,6 @@ class NotificationService
         ])->delete();
     }
 
-    /**
-     * Hapus notifikasi follow (saat unfollow).
-     *
-     * @param  User $actor
-     * @param  User $target
-     * @return void
-     */
     public function removeNotifyFollow(User $actor, User $target): void
     {
         Notification::where([

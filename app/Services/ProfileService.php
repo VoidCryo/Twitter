@@ -3,21 +3,16 @@
 namespace App\Services;
 
 use App\Models\Post;
+use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileService
 {
-    /**
-     * Ambil user beserta relasi profil.
-     *
-     * @param  string|int $identifier  username atau id
-     * @return User
-     */
-    public function getUser(string|int $identifier): User
-    {
+    public function getUser(string|int $identifier): User {
         if (is_numeric($identifier)) {
             return User::with('profile')->withCount(['followings', 'followers', 'topLevelPosts as posts_count'])->findOrFail($identifier);
         }
@@ -25,15 +20,7 @@ class ProfileService
         return User::with('profile')->withCount(['followings', 'followers', 'topLevelPosts as posts_count'])->where('name', $identifier)->firstOrFail();
     }
 
-    /**
-     * Ambil post-post milik user (tidak termasuk reply).
-     *
-     * @param  User $user
-     * @param  int  $perPage
-     * @return LengthAwarePaginator
-     */
-    public function getUserPosts(User $user, int $perPage = 15): LengthAwarePaginator
-    {
+    public function getUserPosts(User $user, int $perPage = 15): LengthAwarePaginator {
         return Post::with([
                 'postMedia',
                 'user.profile',
@@ -48,15 +35,7 @@ class ProfileService
             ->paginate($perPage);
     }
 
-    /**
-     * Ambil post yang disukai user.
-     *
-     * @param  User $user
-     * @param  int  $perPage
-     * @return LengthAwarePaginator
-     */
-    public function getLikedPosts(User $user, int $perPage = 15): LengthAwarePaginator
-    {
+    public function getLikedPosts(User $user, int $perPage = 15): LengthAwarePaginator {
         return $user->likedPosts()
             ->with([
                 'postMedia',
@@ -71,15 +50,7 @@ class ProfileService
             ->paginate($perPage);
     }
 
-    /**
-     * Update profil user (bio, location, birthday).
-     *
-     * @param  User  $user
-     * @param  array $data
-     * @return void
-     */
-    public function updateProfile(User $user, array $data): void
-    {
+    public function updateProfile(User $user, array $data): void {
         DB::transaction(function () use ($user, $data) {
             $allowedFields = ['display_name', 'bio', 'location', 'birthday'];
             $profileData = [];
@@ -98,15 +69,14 @@ class ProfileService
         });
     }
 
-    /**
-     * Update avatar user.
-     *
-     * @param  User         $user
-     * @param  UploadedFile $file
-     * @return string path avatar baru
-     */
-    public function updateAvatar(User $user, UploadedFile $file): string
-    {
+    public function updateAvatar(User $user, UploadedFile $file): string {
+        /** @var Profile $profile */
+        $profile = $user->profile();
+
+        if ($profile && $profile->avatar) {
+            Storage::disk('public')->delete($profile->avatar);
+        }
+
         $path = $file->store('avatars', 'public');
 
         $user->profile()->updateOrCreate(
@@ -117,15 +87,14 @@ class ProfileService
         return $path;
     }
 
-    /**
-     * Update banner user.
-     *
-     * @param  User         $user
-     * @param  UploadedFile $file
-     * @return string path banner baru
-     */
-    public function updateBanner(User $user, UploadedFile $file): string
-    {
+    public function updateBanner(User $user, UploadedFile $file): string {
+        /** @var Profile $profile */
+        $profile = $user->profile();
+
+        if ($profile && $profile->banner) {
+            Storage::disk('public')->delete($profile->banner);
+        }
+
         $path = $file->store('banners', 'public');
 
         $user->profile()->updateOrCreate(

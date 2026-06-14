@@ -89,8 +89,6 @@ class PostService
 
     public function getFollowingFeed(User $user, int $perPage = 15): LengthAwarePaginator {
         $followingIds = $user->followings()->allRelatedIds()->toArray();
-        $targetUserIds = array_merge($followingIds, [$user->id]);
-
         return Post::with([
                 'postMedia',
                 'user.profile',
@@ -99,8 +97,14 @@ class PostService
                 'repost_of' => fn($q) => $q->withCount(['likedBy', 'reposts', 'replies']),
             ])
             ->withCount(['likedBy', 'reposts', 'replies'])
-            ->whereIn('user_id', $targetUserIds)
             ->whereNull('parent_id')
+            ->where(function($query) use ($followingIds, $user) {
+                $query->whereIn('user_id', $followingIds)
+                      ->orWhere(function($q) use ($user) {
+                          $q->where('user_id', $user->id)
+                            ->whereNotNull('repost_of_id');
+                      });
+            })
             ->latest()
             ->paginate($perPage);
     }
