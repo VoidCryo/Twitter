@@ -48,6 +48,8 @@ class PostService
                 return false;
             }
 
+            $post->loadMissing('repost_of');
+
             $rootId = $post->repost_of_id
                 ? ($post->repost_of->root_id ?? $post->repost_of_id)
                 : ($post->root_id ?? $post->id);
@@ -86,7 +88,8 @@ class PostService
     }
 
     public function getFollowingFeed(User $user, int $perPage = 15): LengthAwarePaginator {
-        $followingIds = $user->followings()->allRelatedIds();
+        $followingIds = $user->followings()->allRelatedIds()->toArray();
+        $targetUserIds = array_merge($followingIds, [$user->id]);
 
         return Post::with([
                 'postMedia',
@@ -96,8 +99,7 @@ class PostService
                 'repost_of' => fn($q) => $q->withCount(['likedBy', 'reposts', 'replies']),
             ])
             ->withCount(['likedBy', 'reposts', 'replies'])
-            ->whereIn('user_id', $followingIds)
-            ->whereNotIn('user_id', [$user->id])
+            ->whereIn('user_id', $targetUserIds)
             ->whereNull('parent_id')
             ->latest()
             ->paginate($perPage);

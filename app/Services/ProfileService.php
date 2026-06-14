@@ -67,7 +67,7 @@ class ProfileService
             ])
             ->withCount(['likedBy', 'reposts', 'replies'])
             ->whereNull('parent_id')
-            ->latest('likes.created_at')
+            ->orderByPivot('created_at', 'desc')
             ->paginate($perPage);
     }
 
@@ -81,14 +81,15 @@ class ProfileService
     public function updateProfile(User $user, array $data): void
     {
         DB::transaction(function () use ($user, $data) {
-            // user->name (handle @) tidak bisa diubah setelah register
+            $allowedFields = ['display_name', 'bio', 'location', 'birthday'];
+            $profileData = [];
 
-            $profileData = array_filter([
-                'display_name' => $data['display_name'] ?? null,
-                'bio'          => $data['bio'] ?? null,
-                'location'     => $data['location'] ?? null,
-                'birthday'     => $data['birthday'] ?? null,
-            ], fn($v) => $v !== null);
+            foreach ($allowedFields as $field) {
+                if (array_key_exists($field, $data)) {
+                    $value = $data[$field];
+                    $profileData[$field] = (is_string($value) && trim($value) === '') ? null : $value;
+                }
+            }
 
             $user->profile()->updateOrCreate(
                 ['user_id' => $user->id],

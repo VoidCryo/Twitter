@@ -31,4 +31,13 @@ class UpdateProfileRequest extends FormRequest
             'banner'       => 'nullable|image|max:4096',
         ];
     }
+
+    protected function passedValidation(): void
+    {
+        if ($this->filled('birthday') && trim($this->birthday) === '') {
+            $this->merge([
+                'birthday' => null,
+            ]);
+        }
+    }
 }

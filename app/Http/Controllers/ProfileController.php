@@ -16,7 +16,7 @@ class ProfileController extends Controller
 
     public function index(User $user): View
     {
-        $user->load('profile');
+        $user = $this->profileService->getUser($user->id);
         $authUser = Auth::user();
 
         $posts      = $this->profileService->getUserPosts($user);

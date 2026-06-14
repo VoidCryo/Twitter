@@ -23,8 +23,8 @@ class StorePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'required_without:media|max:256',
-            'media'   => 'required_without:content|array|max:4',
+            'content' => 'required_without:media|nullable|string|max:256',
+            'media'   => 'required_without:content|nullable|array|max:4',
             'media.*' => 'image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ];
     }
@@ -32,12 +32,12 @@ class StorePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-                'content.required_without' => 'harus di isi apabila tidak mengirim gambar',
-                'media.required_without' => 'setidaknya kirim 1 gambar apabila tidak mengisi content',
-                'content.max'      => 'post maksimal 256 karakter',
-                'media.max'        => 'maksimal 4 file media',
-                'media.*.image'    => 'file harus berupa gambar',
-                'media.*.max'      => 'ukuran gambar maksimal 2MB',
-            ];
+            'content.required_without' => 'harus di isi apabila tidak mengirim gambar',
+            'media.required_without'   => 'setidaknya kirim 1 gambar apabila tidak mengisi content',
+            'content.max'              => 'post maksimal 256 karakter',
+            'media.max'                => 'maksimal 4 file media',
+            'media.*.image'            => 'file harus berupa gambar',
+            'media.*.max'              => 'ukuran gambar maksimal 2MB',
+        ];
     }
 }

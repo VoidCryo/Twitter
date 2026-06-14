@@ -17,9 +17,15 @@ class SearchService
      */
     public function searchUsers(string $keyword, int $perPage = 15): LengthAwarePaginator
     {
-        return User::with('profile')
-            ->whereFullText('name', $keyword)
-            ->paginate($perPage, ['*'], 'page_user');
+        $query = User::with('profile');
+
+        if (mb_strlen($keyword) < 3) {
+            $query->where('name', 'LIKE', '%' . $keyword . '%');
+        } else {
+            $query->whereFullText('name', $keyword);
+        }
+
+        return $query->paginate($perPage, ['*'], 'page_user');
     }
 
     /**
@@ -31,10 +37,22 @@ class SearchService
      */
     public function searchPosts(string $keyword, int $perPage = 15): LengthAwarePaginator
     {
-        return Post::with(['postMedia', 'user.profile'])
-            ->whereFullText('content', $keyword)
-            ->whereNull('parent_id')
-            ->latest()
+        $query = Post::with([
+                'postMedia',
+                'user.profile',
+                'repost_of.user.profile',
+                'repost_of.postMedia'
+            ])
+            ->withCount(['likedBy', 'reposts', 'replies'])
+            ->whereNull('parent_id');
+
+        if (mb_strlen($keyword) < 3) {
+            $query->where('content', 'LIKE', '%' . $keyword . '%');
+        } else {
+            $query->whereFullText('content', $keyword);
+        }
+
+        return $query->latest()
             ->paginate($perPage, ['*'], 'page_post');
     }
 }

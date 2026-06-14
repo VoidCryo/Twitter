@@ -39,12 +39,18 @@ class NotificationService
     public function notifyLike(User $actor, Post $post): void {
         if ($post->user_id === $actor->id) return;
 
-        Notification::firstOrCreate([
-            'user_id'  => $post->user_id,
-            'actor_id' => $actor->id,
-            'post_id'  => $post->id,
-            'type'     => NotificationType::Like,
-        ]);
+        Notification::updateOrCreate(
+            [
+                'user_id'  => $post->user_id,
+                'actor_id' => $actor->id,
+                'post_id'  => $post->id,
+                'type'     => NotificationType::Like,
+            ],
+            [
+                'read_at'    => null,
+                'created_at' => now(),
+            ]
+        );
     }
 
     /**
@@ -78,11 +84,17 @@ class NotificationService
     {
         if ($actor->id === $target->id) return;
 
-        Notification::firstOrCreate([
-            'user_id'  => $target->id,
-            'actor_id' => $actor->id,
-            'type'     => NotificationType::Follower,
-        ]);
+        Notification::updateOrCreate(
+            [
+                'user_id'  => $target->id,
+                'actor_id' => $actor->id,
+                'type'     => NotificationType::Follower,
+            ],
+            [
+                'read_at'    => null,
+                'created_at' => now(),
+            ]
+        );
     }
 
     /**
