@@ -1,166 +1,136 @@
-@props(['post', 'authUser'])
+@php
+    $displayPost = $post->repost_of ?? $post;
+    $isRepost    = !is_null($post->repost_of_id);
+    $isLiked     = $authUser ? $displayPost->isLiked($authUser) : false;
+    $isReposted  = $authUser
+        ? \App\Models\Post::where('user_id', $authUser->id)->where('repost_of_id', $displayPost->id)->exists()
+        : false;
+    $isOwner     = $authUser && $post->user_id === $authUser->id;
+    $mediaUrls   = $displayPost->postMedia->map(fn($m) => Storage::url($m->image))->values()->toArray();
+    $mediaCnt    = count($mediaUrls);
+@endphp
 
-<article class="post-card">
+<article class="border-bottom px-3 py-2">
     {{-- Repost label --}}
-    @if($post->repost_of_id && $post->repost_of)
-        <div class="repost-label d-flex align-items-center gap-1 mb-2 ms-5 ps-2">
-            <i class="ri-repeat-line"></i>
-            <span>{{ $post->user->name }} merepost</span>
-        </div>
-        @php $displayPost = $post->repost_of; @endphp
-    @else
-        @php $displayPost = $post; @endphp
+    @if($isRepost)
+    <div class="d-flex align-items-center gap-2 text-secondary small mb-2 ps-5">
+        <i class="ri-repeat-2-line"></i>
+        <a href="{{ route('profile', $post->user) }}" class="text-secondary fw-semibold text-decoration-none">{{ $post->user->profile?->display_name ?? $post->user->name }}</a>
+        merepost
+    </div>
     @endif
 
-    {{-- Entire card is clickable → post detail page --}}
-    <a href="{{ route('post', $displayPost) }}" class="post-card-link" aria-label="Lihat post"></a>
-
-    <div class="d-flex gap-3">
-        {{-- Avatar --}}
-        <div>
-            @if($displayPost->user->profile?->avatar)
-                <img src="{{ asset('storage/' . $displayPost->user->profile->avatar) }}"
-                     alt="{{ $displayPost->user->name }}"
-                     class="post-avatar">
-            @else
-                <div class="post-avatar-placeholder">
-                    {{ strtoupper(substr($displayPost->user->name, 0, 1)) }}
-                </div>
-            @endif
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex gap-2 flex-grow-1 min-w-0">
+            @php $profile = $displayPost->user->profile; @endphp
+            <a href="{{ route('profile', $displayPost->user) }}" class="flex-shrink-0">
+                @if($profile?->avatar)
+                    <img src="{{ Storage::url($profile->avatar) }}" class="rounded-circle" style="width:40px;height:40px;object-fit:cover;" alt="">
+                @else
+                    <div class="rounded-circle bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center fw-bold text-secondary flex-shrink-0" style="width:40px;height:40px;">{{ strtoupper(substr($displayPost->user->profile?->display_name ?? $displayPost->user->name, 0, 1)) }}</div>
+                @endif
+            </a>
+            <div class="d-flex align-items-center flex-wrap gap-1" style="line-height:1.3;">
+                <a href="{{ route('profile', $displayPost->user) }}" class="fw-bold text-dark text-decoration-none" style="font-size:15px;">{{ $displayPost->user->profile?->display_name ?? $displayPost->user->name }}</a>
+                <span class="text-secondary small">{{ '@' . $displayPost->user->name }}</span>
+                <span class="text-secondary small">· {{ $displayPost->created_at->diffForHumans(null, true, true) }}</span>
+            </div>
         </div>
 
-        {{-- Content --}}
-        <div class="flex-grow-1 min-w-0">
-            {{-- Header --}}
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="post-username">{{ $displayPost->user->name }}</span>
-                <span class="post-handle">{{ '@' . $displayPost->user->name }}</span>
-                <span class="post-time">· {{ $displayPost->created_at->diffForHumans() }}</span>
-
-                <div class="ms-auto">
-                    @if($authUser->id === $displayPost->user_id)
-                        {{-- Tombol hapus untuk post sendiri --}}
-                        <form method="POST" action="{{ route('post.destroy', $displayPost) }}"
-                              class="d-inline" id="del-{{ $displayPost->id }}"
-                              onclick="event.stopPropagation()">
-                            @csrf @method('DELETE')
-                            <button type="button" class="post-action-btn"
-                                    onclick="event.stopPropagation(); confirmDelete('del-{{ $displayPost->id }}')">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
-                        </form>
-                    @else
-                        {{-- Tombol follow untuk post orang lain --}}
-                        <form method="POST" action="{{ route('user.follow', $displayPost->user) }}"
-                              class="d-inline" onclick="event.stopPropagation()">
-                            @csrf
-                            <button type="submit" class="btn-follow" style="font-size:.78rem;padding:.2rem .75rem">
-                                {{ $authUser->isFollowing($displayPost->user) ? 'Unfollow' : 'Follow' }}
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Body --}}
-            @if($displayPost->content)
-                <p class="post-content mb-0">{{ $displayPost->content }}</p>
-            @endif
-
-            {{-- Media — clickable lightbox --}}
-            @if($displayPost->postMedia->count() > 0)
-                @php
-                    $mediaId = 'media-' . $displayPost->id;
-                    $mediaUrls = $displayPost->postMedia->map(fn($m) => asset('storage/' . $m->image))->values()->toArray();
-                @endphp
-                <div class="post-media-grid grid-{{ $displayPost->postMedia->count() }}"
-                     onclick="event.stopPropagation()">
-                    @foreach($displayPost->postMedia as $index => $media)
-                        <img src="{{ asset('storage/' . $media->image) }}"
-                             alt="media" loading="lazy"
-                             class="post-media-thumb"
-                             onclick="openLightbox({{ json_encode($mediaUrls) }}, {{ $index }})"
-                             style="cursor:zoom-in">
-                    @endforeach
-                </div>
-            @endif
-
-            {{-- Actions --}}
-            <div class="post-actions d-flex gap-1 mt-2" onclick="event.stopPropagation()">
-                {{-- Reply --}}
-                <button class="post-action-btn" data-bs-toggle="modal"
-                        data-bs-target="#replyModal{{ $displayPost->id }}">
-                    <i class="ri-chat-1-line"></i>
-                    <span>{{ $displayPost->replies_count }}</span>
+        <div class="ms-2">
+            @if($isOwner)
+            <form action="{{ route('post.destroy', $post) }}" method="POST" id="deleteForm{{ $post->id }}">
+                @csrf @method('DELETE')
+                <button type="button" class="btn btn-link text-secondary p-1" onclick="confirmDelete('deleteForm{{ $post->id }}')">
+                    <i class="ri-delete-bin-line"></i>
                 </button>
-
-                {{-- Repost --}}
-                <form method="POST" action="{{ route('post.repost', $displayPost) }}" class="d-inline">
-                    @csrf
-                    @php $isReposted = $authUser->posts()->where('repost_of_id', $displayPost->id)->exists(); @endphp
-                    <button type="submit" class="post-action-btn {{ $isReposted ? 'reposted' : '' }}">
-                        <i class="ri-repeat-line"></i>
-                        <span>{{ $displayPost->reposts_count }}</span>
-                    </button>
-                </form>
-
-                {{-- Like --}}
-                <form method="POST" action="{{ route('post.like', $displayPost) }}" class="d-inline">
-                    @csrf
-                    @php $isLiked = $displayPost->isLiked($authUser); @endphp
-                    <button type="submit" class="post-action-btn {{ $isLiked ? 'liked' : '' }}">
-                        <i class="{{ $isLiked ? 'ri-heart-fill' : 'ri-heart-line' }}"></i>
-                        <span>{{ $displayPost->likes_count }}</span>
-                    </button>
-                </form>
-            </div>
+            </form>
+            @elseif($authUser && !$isRepost && $displayPost->user_id !== $authUser->id)
+            <form action="{{ route('follow.toggle', $displayPost->user) }}" method="POST">
+                @csrf
+                @if($authUser->isFollowing($displayPost->user))
+                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">Mengikuti</button>
+                @else
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">Ikuti</button>
+                @endif
+            </form>
+            @endif
         </div>
+    </div>
+
+    {{-- Content --}}
+    @if($displayPost->content)
+        <a href="{{ route('post', $displayPost) }}" class="d-block text-dark text-decoration-none ms-5 mt-1 mb-2" style="font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word;">{{ $displayPost->content }}</a>
+    @endif
+
+    {{-- Media Grid --}}
+    @if($mediaCnt > 0)
+    <div class="ms-5 mb-2 tnb-media-grid tnb-media-{{ $mediaCnt }}" style="border-radius:12px;overflow:hidden;">
+        @if($mediaCnt === 1)
+            <img src="{{ $mediaUrls[0] }}" alt="media" loading="lazy"
+                 style="width:100%;height:280px;object-fit:cover;display:block;cursor:zoom-in;"
+                 onclick="event.stopPropagation();openLightbox({{ json_encode($mediaUrls) }},0)">
+
+        @elseif($mediaCnt === 2)
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+                @foreach($mediaUrls as $gi => $url)
+                <img src="{{ $url }}" alt="media" loading="lazy"
+                     style="width:100%;height:200px;object-fit:cover;display:block;cursor:zoom-in;"
+                     onclick="event.stopPropagation();openLightbox({{ json_encode($mediaUrls) }},{{ $gi }})">
+                @endforeach
+            </div>
+
+        @elseif($mediaCnt === 3)
+            <div style="display:flex;gap:3px;height:280px;">
+                <div style="flex:2;">
+                    <img src="{{ $mediaUrls[0] }}" alt="media" loading="lazy"
+                         style="width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;"
+                         onclick="event.stopPropagation();openLightbox({{ json_encode($mediaUrls) }},0)">
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+                    <img src="{{ $mediaUrls[1] }}" alt="media" loading="lazy"
+                         style="width:100%;flex:1;object-fit:cover;display:block;cursor:zoom-in;min-height:0;"
+                         onclick="event.stopPropagation();openLightbox({{ json_encode($mediaUrls) }},1)">
+                    <img src="{{ $mediaUrls[2] }}" alt="media" loading="lazy"
+                         style="width:100%;flex:1;object-fit:cover;display:block;cursor:zoom-in;min-height:0;"
+                         onclick="event.stopPropagation();openLightbox({{ json_encode($mediaUrls) }},2)">
+                </div>
+            </div>
+
+        @else
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+                @foreach(array_slice($mediaUrls,0,4) as $gi => $url)
+                <img src="{{ $url }}" alt="media" loading="lazy"
+                     style="width:100%;height:180px;object-fit:cover;display:block;cursor:zoom-in;"
+                     onclick="event.stopPropagation();openLightbox({{ json_encode($mediaUrls) }},{{ $gi }})">
+                @endforeach
+            </div>
+        @endif
+    </div>
+    @endif
+
+    {{-- Actions --}}
+    <div class="d-flex ps-5 mt-1">
+        <a href="{{ route('post', $displayPost) }}" class="btn btn-link text-secondary d-flex align-items-center gap-1 flex-fill justify-content-center px-2 py-1 text-decoration-none">
+            <i class="ri-chat-1-line fs-5"></i>
+            @if($displayPost->replies_count > 0)<span class="small fw-medium">{{ $displayPost->replies_count }}</span>@endif
+        </a>
+        <form action="{{ route('post.repost', $displayPost) }}" method="POST" class="flex-fill">
+            @csrf
+            <button type="submit" class="btn btn-link d-flex align-items-center gap-1 w-100 justify-content-center px-2 py-1 {{ $isReposted ? 'text-success' : 'text-secondary' }} text-decoration-none">
+                <i class="ri-repeat-2-line fs-5"></i>
+                @if($displayPost->reposts_count > 0)<span class="small fw-medium">{{ $displayPost->reposts_count }}</span>@endif
+            </button>
+        </form>
+        <form action="{{ route('post.like', $displayPost) }}" method="POST" class="flex-fill">
+            @csrf
+            <button type="submit" class="btn btn-link d-flex align-items-center gap-1 w-100 justify-content-center px-2 py-1 {{ $isLiked ? 'text-danger' : 'text-secondary' }} text-decoration-none">
+                <i class="{{ $isLiked ? 'ri-heart-fill' : 'ri-heart-line' }} fs-5"></i>
+                @if($displayPost->liked_by_count > 0)<span class="small fw-medium">{{ $displayPost->liked_by_count }}</span>@endif
+            </button>
+        </form>
+        <a href="{{ route('post.interactions', $displayPost) }}" class="btn btn-link text-secondary d-flex align-items-center gap-1 flex-fill justify-content-center px-2 py-1 text-decoration-none">
+            <i class="ri-bar-chart-line fs-5"></i>
+        </a>
     </div>
 </article>
-
-{{-- Reply Modal --}}
-<div class="modal fade" id="replyModal{{ $displayPost->id }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-bold">Balas Post</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body pt-1">
-                <div class="d-flex gap-3 mb-3 pb-3" style="border-bottom:1px solid #e1e8ed">
-                    <div class="post-avatar-placeholder" style="width:36px;height:36px;font-size:.85rem">
-                        {{ strtoupper(substr($displayPost->user->name, 0, 1)) }}
-                    </div>
-                    <div>
-                        <span class="post-username" style="font-size:.875rem">{{ $displayPost->user->name }}</span>
-                        <p class="mb-0 mt-1" style="font-size:.9rem;color:#536471">{{ Str::limit($displayPost->content, 100) }}</p>
-                    </div>
-                </div>
-
-                <form method="POST" action="{{ route('post.reply', $displayPost) }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="d-flex gap-3">
-                        <div class="post-avatar-placeholder" style="width:36px;height:36px;font-size:.85rem">
-                            {{ strtoupper(substr($authUser->name, 0, 1)) }}
-                        </div>
-                        <div class="flex-grow-1">
-                            <textarea name="content" class="compose-textarea"
-                                      placeholder="Tulis balasan..." maxlength="256" required rows="3"
-                                      style="font-size:.95rem"></textarea>
-                            <div id="replyPreview{{ $displayPost->id }}" class="compose-media-preview d-none"></div>
-                            <div class="d-flex align-items-center justify-content-between mt-1">
-                                <label class="text-secondary" style="cursor:pointer" title="Tambah media">
-                                    <i class="ri-image-line fs-5" style="color:#1d9bf0"></i>
-                                    <input type="file" name="media[]" accept="image/*" multiple class="d-none"
-                                           onchange="previewImages(this, 'replyPreview{{ $displayPost->id }}')">
-                                </label>
-                                <button type="submit" class="btn rounded-pill fw-bold px-4"
-                                        style="background:#1d9bf0;color:#fff;font-size:.9rem">Balas</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>

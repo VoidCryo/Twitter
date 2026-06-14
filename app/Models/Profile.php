@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $user_id
+ * @property string|null $display_name
  * @property string|null $avatar
  * @property string|null $banner
  * @property string|null $bio
@@ -29,10 +30,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Profile whereLocation($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Profile whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Profile whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Profile whereDisplayName($value)
  * @mixin \Eloquent
  */
 #[Fillable([
-'user_id', 'avatar', 'banner', 'bio', 'birthday', 'location'
+'user_id', 'display_name', 'avatar', 'banner', 'bio', 'birthday', 'location'
 ])]
 class Profile extends Model
 {

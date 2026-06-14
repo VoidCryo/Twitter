@@ -6,13 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Tenebris' }}</title>
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
-    @stack('styles')
 </head>
-<body>
-    <div class="auth-wrapper">
-        {{ $slot }}
-    </div>
-
+<body class="bg-light min-vh-100 d-flex align-items-center justify-content-center py-4 px-3">
+    {{ $slot }}
     @stack('scripts')
 </body>
 </html>

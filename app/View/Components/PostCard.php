@@ -15,7 +15,7 @@ class PostCard extends Component
      */
     public function __construct(
         public Post $post,
-        public User $authUser,
+        public ?User $authUser,
     ) {}
 
     /**

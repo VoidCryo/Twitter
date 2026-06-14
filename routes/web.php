@@ -1,48 +1,56 @@
 <?php
 
-use App\Http\Controllers\auth\LoginController;
-use App\Http\Controllers\auth\RegisterController;
-use App\Http\Controllers\page\HomeController;
-use App\Http\Controllers\page\SearchController;
-use App\Http\Controllers\page\PostController;
-use App\Http\Controllers\service\ServPostController;
-use App\Http\Controllers\service\ServFollowController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\FollowListController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostInteractionsController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\Action\FollowController;
+use App\Http\Controllers\Action\PostController as PostActionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    // register
-    Route::get('/Register', [RegisterController::class, 'index'])->name('register');
-    Route::post('/Register', [RegisterController::class, 'register'])->name('register.user');
-
-    // login
-    Route::get('/Login', [LoginController::class, 'index'])->name('login');
-    Route::post('/Login', [LoginController::class, 'login'])->name('login.user');
+    Route::get('/login',    [LoginController::class, 'index'])->name('login');
+    Route::post('/login',   [LoginController::class, 'store'])->name('login.store');
+    Route::get('/register', [RegisterController::class, 'index'])->name('register');
+    Route::post('/register',[RegisterController::class, 'store'])->name('register.store');
 });
+
+Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
 Route::middleware('auth')->group(function () {
-    // home
+
+    // Home feed
     Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::get('/Home/Load-more', [HomeController::class, 'loadMore'])->name('home.load-more');
 
-    //SearchController
-    Route::get('/Search', [SearchController::class, 'index'])->name('search');
+    // Search
+    Route::get('/search', [SearchController::class, 'index'])->name('search');
 
-    // logout
-    Route::post('/Logout', [LoginController::class, 'logout'])->name('logout');
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
 
-    // follow
-    Route::post('/User/{user}/Follow', [ServFollowController::class, 'toggle'])->name('user.follow');
+    // Posts
+    Route::get('/post/{post}', [PostController::class, 'index'])->name('post');
+    Route::get('/post/{post}/interactions', [PostInteractionsController::class, 'index'])->name('post.interactions');
 
-    // post
-    Route::get('/Post/{post}', [PostController::class, 'index'])->name('post');
-    Route::get('/Post/{post}/Replies', [PostController::class, 'loadMoreReplies'])->name('post.load-more-replies');
+    // Post actions
+    Route::post('/post',              [PostActionController::class, 'store'])->name('post.store');
+    Route::post('/post/{post}/like',  [PostActionController::class, 'like'])->name('post.like');
+    Route::post('/post/{post}/repost',[PostActionController::class, 'repost'])->name('post.repost');
+    Route::post('/post/{post}/reply', [PostActionController::class, 'reply'])->name('post.reply');
+    Route::delete('/post/{post}',     [PostActionController::class, 'destroy'])->name('post.destroy');
 
-    Route::prefix('/Post')->group(function () {
-        Route::post('/', [ServPostController::class, 'store'])->name('post.store');
-        Route::post('/{post}/Like', [ServPostController::class, 'like'])->name('post.like');
-        Route::post('/{post}/Repost', [ServPostController::class, 'repost'])->name('post.repost');
-        Route::post('/{post}/Reply', [ServPostController::class, 'reply'])->name('post.reply');
-        Route::delete('/{post}/Destroy', [ServPostController::class, 'destroy'])->name('post.destroy');
-    });
+    // Profile
+    Route::get('/profile/{user}',          [ProfileController::class, 'index'])->name('profile');
+    Route::get('/profile/{user}/followers', [FollowListController::class, 'followers'])->name('profile.followers');
+    Route::get('/profile/{user}/following', [FollowListController::class, 'following'])->name('profile.following');
+    Route::get('/settings/profile',        [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/settings/profile',      [ProfileController::class, 'update'])->name('profile.update');
+
+    // Follow
+    Route::post('/follow/{user}', [FollowController::class, 'toggle'])->name('follow.toggle');
 });
-

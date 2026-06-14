@@ -18,9 +18,6 @@ return new class extends Migration
             $table->foreignId('root_id')->nullable()->constrained('posts', 'id')->nullOnDelete();
             $table->foreignId('repost_of_id')->nullable()->constrained('posts', 'id')->nullOnDelete();
             $table->text('content')->nullable();
-            $table->unsignedInteger('like_count')->default(0);
-            $table->unsignedInteger('repost_count')->default(0);
-            $table->unsignedInteger('replies_count')->default(0);
             $table->timestamps();
             $table->index('parent_id');
             $table->index('root_id');
